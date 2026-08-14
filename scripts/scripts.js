@@ -50,6 +50,40 @@ async function loadFonts() {
 }
 
 /**
+ * Resolves a fragment name (e.g. 'nav') to the correct content path.
+ * Derives the content root from the current page path so fragments work
+ * whether content is served from root (/) or a sub-path (/content/).
+ */
+export function getContentRoot() {
+  const { pathname } = window.location;
+  // Find the deepest path segment before the page name that contains content pages
+  // e.g. /content/wknd/about → /content/wknd, /about → /
+  const segments = pathname.split('/').filter(Boolean);
+  // The last segment is the page itself; everything before it is the content root
+  if (segments.length > 1) {
+    // Check if content is nested (e.g. /content/adventures or /content/blog/post)
+    // Walk up to find where nav.plain.html would live (sibling of pages, not inside blog/)
+    // For /content/blog/post → content root is /content
+    // For /content/adventures → content root is /content
+    // For /adventures → content root is /
+    const root = segments.slice(0, -1);
+    // Skip known leaf directories like 'blog'
+    while (root.length > 0 && ['blog'].includes(root[root.length - 1])) {
+      root.pop();
+    }
+    return `/${root.join('/')}`;
+  }
+  return '';
+}
+
+/** Shared brand logo SVG + text used by header and footer */
+export const BRAND_LOGO = `<span class="nav-logo-icon" aria-hidden="true">
+  <svg width="100%" height="100%" viewBox="0 0 33 33" preserveAspectRatio="xMidYMid meet">
+    <path d="M28,0H5C2.24,0,0,2.24,0,5v23c0,2.76,2.24,5,5,5h23c2.76,0,5-2.24,5-5V5c0-2.76-2.24-5-5-5ZM29,17c-6.63,0-12,5.37-12,12h-1c0-6.63-5.37-12-12-12v-1c6.63,0,12-5.37,12-12h1c0,6.63,5.37,12,12,12v1Z" fill="currentColor"/>
+  </svg>
+</span><span class="nav-logo-text">WKND<br>Adventures</span>`;
+
+/**
  * Turns `/widgets/...` links into widget blocks.
  * @param {Element} main The container element
  */
